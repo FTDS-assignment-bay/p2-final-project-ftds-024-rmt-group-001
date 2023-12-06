@@ -128,7 +128,7 @@ def insertToCloudMySQL():
     '''
     df = pd.read_csv('/opt/airflow/dags/fashion-dataset-clean.csv')
 
-    engine = create_engine('mysql+mysqlconnector://admin:123456789@database-2.csrtmgsb8iz1.ap-southeast-1.rds.amazonaws.com:3306/final_project')
+    engine = create_engine('mysql+mysqlconnector://xxxx:xxxx@database-2.csrtmgsb8iz1.ap-southeast-1.rds.amazonaws.com:3306/final_project')
     df.to_sql('clean_fashion_data', con=engine, if_exists='replace', index=False)
 
 default_args = {
