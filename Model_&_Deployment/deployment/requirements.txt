@@ -3,4 +3,4 @@ pandas
 tables
 Pillow
 joblib
-sklearn
+scikit-learn
