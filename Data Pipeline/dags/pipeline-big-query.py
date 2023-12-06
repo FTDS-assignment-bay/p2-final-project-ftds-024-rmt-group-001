@@ -88,8 +88,30 @@ def fetchCleanData():
     dfTrans = dfTrans.drop(columns=['session_id', 'promo_code', 'shipment_date_limit', 
                                 'shipment_location_lat', 'shipment_location_long'])
     
-    new_columns = dfTrans['product_metadata'].apply(extract_product_info)
-    dfTrans = pd.concat([dfTrans, new_columns], axis=1)
+    dfDetTrans = dfTrans[['booking_id', 'product_metadata']]
+
+    dfDetTrans['product_metadata'] = dfDetTrans['product_metadata'].apply(ast.literal_eval)
+
+    dfDetTrans['product_id'] = dfDetTrans['product_metadata'].apply(lambda x: [item['product_id'] for item in x])
+    dfDetTrans['quantity'] = dfDetTrans['product_metadata'].apply(lambda x: [item['quantity'] for item in x])
+    dfDetTrans['item_price'] = dfDetTrans['product_metadata'].apply(lambda x: [item['item_price'] for item in x])
+
+    expanded_data = {'booking_id': [], 'product_id': [], 'quantity': [], 'item_price': []}
+
+    for _, row in dfDetTrans.iterrows():
+        booking_id = row['booking_id']
+        product_ids = row['product_id']
+        quantities = row['quantity']
+        prices = row['item_price']
+
+        for product_id, quantity, price in zip(product_ids, quantities, prices):
+            expanded_data['booking_id'].append(booking_id)
+            expanded_data['product_id'].append(product_id)
+            expanded_data['quantity'].append(quantity)
+            expanded_data['item_price'].append(price)
+
+    new_df = pd.DataFrame(expanded_data)
+
     dfTrans.drop(columns='product_metadata', inplace=True)
     
     dfTrans['customer_id'] = dfTrans['customer_id'].astype('int64')
@@ -98,26 +120,27 @@ def fetchCleanData():
     dfTransClean = dfTrans.copy()
 
     # merge data
-    merged_df = pd.merge(dfTransClean, dfCustClean, on='customer_id', how='inner', suffixes=('_dfTrans', '_dfCust'))
-    merged_df = pd.merge(merged_df, dfProdClean, on='product_id', how='inner', suffixes=('', '_dfProd'))
+    merged_detdf = pd.merge(new_df, dfProdClean, on='product_id', how='inner', suffixes=('', '_dfProd'))
+    merged_custdf = pd.merge(dfTransClean, dfCustClean, on='customer_id', how='inner', suffixes=('_dfTrans', '_dfCust'))
+    merged_all = pd.merge(merged_detdf, merged_custdf, on='booking_id', how='inner', suffixes=('_mergDet', '_mergCust'))
 
-    merged_df = merged_df.rename(columns={'booking_id': 'transaction_id'})
+    merged_all = merged_all.rename(columns={'booking_id': 'transaction_id'})
 
-    merged_df = merged_df[['transaction_id', 'transaction_date', 'payment_method', 'payment_status',
+    merged_all = merged_all[['transaction_id', 'transaction_date', 'payment_method', 'payment_status',
                        'promo_amount', 'shipment_fee', 'total_amount',
-                       'customer_id', 'first_name', 'last_name', 'gender',
+                       'customer_id', 'first_name', 'last_name', 'gender_mergCust',
                        'device_type', 'home_location_lat', 'home_location_long',
-                       'home_location', 'age', 'gender_dfProd',
+                       'home_location', 'age', 'gender_mergDet',
                        'product_id', 'quantity', 'item_price', 
                        'product_name', 'master_category', 'sub_category',
                        'article_type', 'base_color', 'season', 
                        'year', 'usage']]
     
-    merged_df.rename(columns={'gender': 'customer_gender',
-                          'gender_dfProd': 'product_gender'}, inplace=True)
+    merged_all.rename(columns={'gender_mergCust': 'customer_gender',
+                          'gender_mergDet': 'product_gender'}, inplace=True)
 
     #save to csv file
-    merged_df.to_csv('/opt/airflow/dags/fashion-dataset-clean.csv', index=False)
+    merged_all.to_csv('/opt/airflow/dags/fashion-dataset-clean.csv', index=False)
     
 def insertToBigQuery():
     '''
@@ -136,11 +159,11 @@ def insertToBigQuery():
 
     job_config = bigquery.LoadJobConfig(
         source_format = bigquery.SourceFormat.CSV,
-        # skip_Leading_rows = 1,
+        # skip_Leading_rows = 1, 
         autodetect = True,
     )
 
-    table_id = "hacktiv8-400311.final_project.clean_fashion_data_new"
+    table_id = "hacktiv8-400311.final_project.clean_fashion_data_new_2"
 
     with open(r'/opt/airflow/dags/fashion-dataset-clean.csv', 'rb') as source:
         job = client.load_table_from_file(source, table_id, job_config=job_config)
@@ -166,7 +189,7 @@ default_args = {
 
 with DAG('fauzanbigquery',
          default_args=default_args,
-         schedule_interval='1 0 29 * *', # During the development process, this DAG is set to be run on monthly basis.
+         schedule_interval='1 0 29 * *', # During the development process, this DAG is set to be run on monthly basis. 
          ) as dag:
 
     startMessage = BashOperator(task_id='startMessage',
