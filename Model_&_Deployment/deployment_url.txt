@@ -1,1 +1,1 @@
-https://huggingface.co/spaces/ardian407/fashion-product-recommender
+https://huggingface.co/spaces/ardian407/customer_clustering_and_fashion_product_recommender
