@@ -62,7 +62,7 @@ Folder `Model_&_Deployment`
 ## Additional Notes
 
 - This system is trained on a very specific dataset that have been mentioned before. Therefore, any forms of change that required the needs of dataset changing will resulted to the tweaking process of the entire code structure.
-- To run the data pipeline, please check that the pipeline needs several folder mounted to the Apache Airflow service. To check the required folders check the `Data_Pipeline/airflow_lite.yaml` file.
+- To run the data pipeline, please check that the pipeline needs several folder mounted to the Apache Airflow service. To check the required folders see the `Data_Pipeline/airflow_lite.yaml` file.
 
 ## People Involved in This Project
 
