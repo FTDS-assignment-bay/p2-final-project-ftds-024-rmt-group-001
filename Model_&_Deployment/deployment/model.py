@@ -5,7 +5,7 @@ import pandas as pd
 user_matrix = pd.read_hdf("users_matrix.h5", key='df')
 product_matrix = pd.read_csv("products_matrix.csv", index_col='product_name')
 df = pd.read_csv("data_cust_product.csv")
-
+data_cust = pd.read_csv("data_output.csv")
 
 def cosine_sim(vect1, vect2):
         '''

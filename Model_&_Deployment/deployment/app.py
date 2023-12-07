@@ -4,7 +4,7 @@ from PIL import Image
 import joblib 
 
 # Import beberapa function dari model.py dan beberapa variable
-from model import product_based, collaborative, user_matrix, product_matrix, df
+from model import product_based, collaborative, user_matrix, product_matrix, df, data_cust
 
 # Load model pipeline
 pipeline = joblib.load('pipeline.pkl')
@@ -18,18 +18,25 @@ def run():
         st.session_state.recommender_result = None
 
     # Judul aplikasi
-    st.write("#### Fashion Product Customer Clustering and Recommender System")
+    st.write("#### Fashion Product Customer Segmentation and Recommender System")
     
     # Tampilkan gambar
     image = Image.open('image.webp')  
     st.image(image)
 
+    # Customer Segmentation
+    st.write("##### Customer Segmentation")
+    st.write("Fill in the details of transactions")
+
     # Form untuk melakukan clustering
     with st.form("Cluster"):
 
-        # Input slider untuk beberapa fitur
-        max_price = st.slider(label='Max Price of Items', min_value=0, max_value=50000000, value=10000)
-        trans_count = st.slider(label='Transaction Count', min_value=1, max_value=1000, value=1)
+        # Input number untuk beberapa fitur
+        section1, section2 = st.columns([2, 2])
+        with section1:
+            max_price = st.number_input(label='Max Price of Items', min_value=0, max_value=50000000, value=10000)
+        with section2:
+            trans_count = st.number_input(label='Transaction Count', min_value=1, max_value=1000, value=1)
 
         # Membagi kolom dengan 4 bagian untuk input jumlah barang, promo, pengiriman, dan total pembayaran
         column1, column2, column3, column4 = st.columns([2,2,2,2])
@@ -42,9 +49,6 @@ def run():
         with column4:
             total_amount = st.number_input(label='Total Paid Amount', min_value=0 ,max_value= 5000000000, value=10000)
 
-        # Tombol untuk memprediksi cluster
-        submit_cluster = st.form_submit_button('Predict Cluster')
-
         # Menampilkan data hasil input
         data_display = {
                 'max_price': max_price,
@@ -56,7 +60,10 @@ def run():
                 }
         data_disp = pd.DataFrame([data_display]).reset_index(drop=True)
         st.dataframe(data_disp)
-
+       
+        # Tombol untuk memprediksi cluster
+        submit_cluster = st.form_submit_button('Predict Cluster')
+        
     # Proses saat tombol cluster ditekan
     if submit_cluster:
         avg_item_price = (total_amount - total_shipment - total_promo) / total_items
@@ -82,12 +89,15 @@ def run():
         # Data inference ke dataframe
         data_inf = pd.DataFrame([data]).reset_index(drop=True)
         prediction = pipeline.predict(data_inf)
-        st.session_state.cluster_result = f'#### Category: {dict_cluster[int(prediction)]}'
+        st.session_state.cluster_result = f'##### Category: {dict_cluster[int(prediction)]}'
     
     # Menampilkan hasil cluster
     if st.session_state.cluster_result:
         st.write(st.session_state.cluster_result)
 
+
+    st.markdown("---")
+    st.write("##### Recommender System")
     # Form recommender system
     with st.form("Recommender system"):
         
@@ -98,10 +108,19 @@ def run():
         with col2:
             # Product name form berdasarkan index product matrix
             product = st.selectbox('Select Product Name', options=product_matrix.index.unique().tolist())
-
+        customer_data = {
+            'customer_id': user_id,
+            'age': data_cust[data_cust['customer_id'] == user_id]['age'].values[0],
+            'gender': data_cust[data_cust['customer_id'] == user_id]['gender'].values[0],
+            }
+        data_cust_disp = pd.DataFrame([customer_data]).reset_index(drop=True)
+    
+        st.dataframe(data_cust_disp)
         # Tombol rekomendasi
         submit_recommender = st.form_submit_button('Recommend')
-        
+    
+   
+
     # Proses saat tombol recommender ditekan
     if submit_recommender:
         # Pemanggilan collaborative filtering
