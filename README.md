@@ -6,6 +6,9 @@ System Recommendation Demo: [HuggingFace](https://huggingface.co/spaces/ardian40
 
 Dashboard for EDA: [Looker](https://lookerstudio.google.com/reporting/4f505408-e4a4-4e5b-ba86-f9d6fdf2378a)
 
+## High Level Process of the Project
+![](2023-12-07_14-01-55_1.gif)
+
 ## About the Recommendation System and Clustering Model
 
 This overall recommendation system and customer segmentation program is built by using the [Fashion E-Commerce](https://www.kaggle.com/datasets/aldoattallah/fashion-ecommerce) dataset from kaggle. The dataset contains the information about the transactions, products, customers and click event. Since this project prioritize simplicity, we only use the transactions, products and customers data.
